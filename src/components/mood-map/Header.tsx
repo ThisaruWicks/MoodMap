@@ -1,9 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BookHeart, Users } from "lucide-react";
+import { BookHeart, Users, User } from "lucide-react";
 
-export default function Header() {
+interface HeaderProps {
+  onToggleView: () => void;
+  viewMode: 'patient' | 'psychiatrist';
+}
+
+export default function Header({ onToggleView, viewMode }: HeaderProps) {
   return (
     <header className="flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -12,9 +17,18 @@ export default function Header() {
           MoodMap
         </h1>
       </div>
-      <Button variant="outline">
-        <Users className="mr-2 h-4 w-4" />
-        Share with Psychiatrist
+      <Button variant="outline" onClick={onToggleView}>
+        {viewMode === 'patient' ? (
+          <>
+            <Users className="mr-2 h-4 w-4" />
+            Share with Psychiatrist
+          </>
+        ) : (
+          <>
+            <User className="mr-2 h-4 w-4" />
+            Switch to Patient View
+          </>
+        )}
       </Button>
     </header>
   );

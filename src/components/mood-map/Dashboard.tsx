@@ -43,11 +43,16 @@ const initialEntries: JournalEntry[] = [
 export default function Dashboard() {
   const [entries, setEntries] = useState<JournalEntry[]>(initialEntries);
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
+  const [viewMode, setViewMode] = useState<'patient' | 'psychiatrist'>('patient');
   const { toast } = useToast();
 
   const sortedEntries = useMemo(() => {
     return [...entries].sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [entries]);
+
+  const handleToggleView = () => {
+    setViewMode(prev => prev === 'patient' ? 'psychiatrist' : 'patient');
+  };
 
   const handleAddEntry = async (content: string) => {
     setIsLoading(prev => ({ ...prev, form: true }));
@@ -102,14 +107,16 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <Header />
+        <Header onToggleView={handleToggleView} viewMode={viewMode} />
         <main className="mt-8 grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 flex flex-col gap-8">
-            <NewEntryForm onAddEntry={handleAddEntry} isLoading={!!isLoading['form']} />
+            {viewMode === 'patient' && (
+              <NewEntryForm onAddEntry={handleAddEntry} isLoading={!!isLoading['form']} />
+            )}
             <ProactiveWarning entries={sortedEntries} />
             <MoodChart entries={sortedEntries} />
           </div>
-          <div className="lg:col-span-2">
+          <div className={`lg:col-span-2 ${viewMode === 'psychiatrist' ? 'lg:col-start-1 lg:row-start-1 lg:col-span-3' : ''}`}>
             <JournalEntryList 
               entries={sortedEntries}
               onFlagEntry={handleFlagEntry}
