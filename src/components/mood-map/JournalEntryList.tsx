@@ -10,19 +10,23 @@ interface JournalEntryListProps {
   entries: JournalEntry[];
   onFlagEntry: (entryId: string, entryContent: string) => void;
   isLoading: { [key: string]: boolean };
+  viewMode: 'patient' | 'psychiatrist';
 }
 
-export default function JournalEntryList({ entries, onFlagEntry, isLoading }: JournalEntryListProps) {
+export default function JournalEntryList({ entries, onFlagEntry, isLoading, viewMode }: JournalEntryListProps) {
+  const significantEntries = entries.filter(e => e.isSignificant);
+  const displayEntries = viewMode === 'psychiatrist' ? significantEntries : entries;
+
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Recent Entries</CardTitle>
+        <CardTitle>{viewMode === 'psychiatrist' ? 'Significant Entries' : 'Recent Entries'}</CardTitle>
       </CardHeader>
       <CardContent>
-        {entries.length > 0 ? (
+        {displayEntries.length > 0 ? (
           <ScrollArea className="h-[70vh] pr-4">
             <div className="space-y-4">
-              {entries.map(entry => (
+              {displayEntries.map(entry => (
                 <JournalEntryCard
                   key={entry.id}
                   entry={entry}
@@ -35,8 +39,8 @@ export default function JournalEntryList({ entries, onFlagEntry, isLoading }: Jo
         ) : (
           <div className="flex flex-col items-center justify-center h-[70vh] text-center text-muted-foreground">
             <BookText className="h-12 w-12 mb-4" />
-            <p className="font-medium">No Entries Yet</p>
-            <p className="text-sm">Your journal entries will appear here.</p>
+            <p className="font-medium">No {viewMode === 'psychiatrist' && 'Significant'} Entries Yet</p>
+            <p className="text-sm">Your {viewMode === 'psychiatrist' && 'flagged'} journal entries will appear here.</p>
           </div>
         )}
       </CardContent>

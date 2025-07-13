@@ -5,12 +5,14 @@ import React, { useState, useMemo } from 'react';
 import type { JournalEntry } from './types';
 import { analyzeMood } from '@/ai/flows/analyze-mood';
 import { summarizeEntry } from '@/ai/flows/flag-significant-entry';
+import { analyzeSocialPost } from '@/ai/flows/analyze-social-post';
 
 import Header from './Header';
 import NewEntryForm from './NewEntryForm';
 import ProactiveWarning from './ProactiveWarning';
 import MoodChart from './MoodChart';
 import JournalEntryList from './JournalEntryList';
+import SocialMediaCard from './SocialMediaCard';
 import { useToast } from '@/hooks/use-toast';
 
 const initialEntries: JournalEntry[] = [
@@ -45,6 +47,7 @@ export default function Dashboard() {
   const [entries, setEntries] = useState<JournalEntry[]>(initialEntries);
   const [isLoading, setIsLoading] = useState<{ [key: string]: boolean }>({});
   const [viewMode, setViewMode] = useState<'patient' | 'psychiatrist'>('patient');
+  const [socialAnalysis, setSocialAnalysis] = useState<{ sentimentLabel: string; advice: string } | null>(null);
   const { toast } = useToast();
 
   const sortedEntries = useMemo(() => {
@@ -105,6 +108,24 @@ export default function Dashboard() {
     }
   };
 
+  const handleAnalyzeSocialPost = async (postContent: string) => {
+    setIsLoading(prev => ({...prev, social: true}));
+    setSocialAnalysis(null);
+    try {
+      const result = await analyzeSocialPost({postContent});
+      setSocialAnalysis(result);
+    } catch (error) {
+       console.error('Failed to analyze social post:', error);
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to analyze your social media post. Please try again.",
+      });
+    } finally {
+      setIsLoading(prev => ({...prev, social: false}));
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -116,12 +137,20 @@ export default function Dashboard() {
             )}
             <ProactiveWarning entries={sortedEntries} />
             <MoodChart entries={sortedEntries} />
+            {viewMode === 'patient' && (
+              <SocialMediaCard 
+                onAnalyzePost={handleAnalyzeSocialPost}
+                isLoading={!!isLoading['social']}
+                analysisResult={socialAnalysis}
+              />
+            )}
           </div>
-          <div className={`lg:col-span-2 ${viewMode === 'psychiatrist' ? 'lg:col-start-1 lg:row-start-1 lg:col-span-3' : ''}`}>
+          <div className={`lg:col-span-2 ${viewMode === 'psychiatrist' ? 'lg:col-start-1 lg:row-start-1 lg:col-span-5' : ''}`}>
             <JournalEntryList 
               entries={sortedEntries}
               onFlagEntry={handleFlagEntry}
               isLoading={isLoading}
+              viewMode={viewMode}
             />
           </div>
         </main>
